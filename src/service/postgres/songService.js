@@ -25,8 +25,18 @@ class songService {
         return result.rows[0].id
     }
 
-    async getAllSongs() {
-        const result = await this._pool.query('SELECT id, title, performer FROM songs')
+    async getAllSongs({ title, performer }) {
+        let query
+        if (title && performer) {
+            query = `SELECT id, title, performer FROM songs WHERE title ILIKE '%${title}%' AND performer ILIKE '%${performer}%'`
+        } else if (title || performer) {
+            query = `SELECT id, title, performer FROM songs WHERE title ILIKE '%${title}%' OR performer ILIKE '%${performer}%'`
+        }
+        else {
+            query = 'SELECT id, title, performer FROM songs'
+        }
+
+        const result = await this._pool.query(query)
         return result.rows
     }
 

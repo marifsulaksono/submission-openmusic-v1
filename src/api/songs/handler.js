@@ -47,7 +47,7 @@ class SongHandler {
 
     async getAllSongsHandler(request, h) {
         try {
-            const songs = await this._service.getAllSongs()
+            const songs = await this._service.getAllSongs(request.query)
 
             const response = h.response({
                 status: 'success',
