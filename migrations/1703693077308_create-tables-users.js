@@ -8,6 +8,7 @@ exports.up = pgm => {
         },
         username: {
             type: 'TEXT',
+            unique: true,
             notNull: true,
         },
         password: {
