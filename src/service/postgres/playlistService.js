@@ -5,8 +5,9 @@ const AuthorizationError = require('../../exceptions/AuthorizationError')
 const NotFoundError = require('../../exceptions/NotFoundError')
 
 class PlaylistService {
-    constructor() {
+    constructor(collaborationService) {
         this._pool = new Pool()
+        this._collaborationService = collaborationService
     }
 
     async addPlaylist(name, owner) {
@@ -26,13 +27,13 @@ class PlaylistService {
 
     async getPlaylistsByOwner(owner) {
         const query = {
-            text: 'SELECT id, name, owner AS username FROM playlists WHERE owner = $1',
+            text: 'SELECT p.id, p.name, u.username FROM playlists p JOIN users u ON p.owner = u.id LEFT JOIN collaborations c ON p.id = c.playlist_id WHERE p.owner = $1 OR c.user_id = $1',
             values: [owner]
         }
 
         const result = await this._pool.query(query)
-        if (!result.rows.length) {
-            throw new InvariantError('Playlist tidak ditemukan')
+        if (!result.rows.length < 0) {
+            throw new NotFoundError('Playlist tidak ditemukan')
         }
 
         return result.rows
@@ -41,7 +42,7 @@ class PlaylistService {
     async deletePlaylistById(id) {
         const result = await this._pool.query('DELETE FROM playlists WHERE id = $1 RETURNING id', [id])
         if (!result.rows.length) {
-            throw new InvariantError('Gagal menghapus playlist. Id tidak ditemukan')
+            throw new NotFoundError('Gagal menghapus playlist. Id tidak ditemukan')
         }
     }
 
@@ -109,6 +110,22 @@ class PlaylistService {
         const playlist = result.rows[0]
         if (playlist.owner !== owner) {
             throw new AuthorizationError('Anda tidak berhak mengakses resource ini')
+        }
+    }
+
+    async verifyPlaylistAccess(playlistId, userId) {
+        try {
+            await this.verifyPlaylistOwner(playlistId, userId)
+        } catch (error) {
+            if (error instanceof NotFoundError) {
+                throw error
+            }
+
+            try {
+                await this._collaborationService.verifyCollaborator(playlistId, userId)
+            } catch (error) {
+                throw error
+            }
         }
     }
 }
