@@ -35,7 +35,14 @@ class AlbumService {
             throw new NotFoundError('Album tidak ditemukan')
         }
 
-        return result.rows[0]
+        const album = {
+            id: result.rows[0].id,
+            name: result.rows[0].name,
+            year: result.rows[0].year,
+            coverUrl: result.rows[0].cover
+        }
+
+        return album
     }
 
     async getSongsByAlbumId(albumId) {
@@ -70,6 +77,15 @@ class AlbumService {
         if (!result.rows.length) {
             throw new NotFoundError('Gagal menghapus album. Id tidak ditemukan')
         }
+    }
+
+    async saveCoverAlbum(coverUrl, id) {
+        const query = {
+            text: 'UPDATE albums SET cover = $1 WHERE id = $2 RETURNING id',
+            values: [coverUrl, id]
+        }
+
+        const result = await this._pool.query(query)
     }
 }
 

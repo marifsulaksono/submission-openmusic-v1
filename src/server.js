@@ -2,6 +2,8 @@ require('dotenv').config()
 
 const Hapi = require('@hapi/hapi')
 const Jwt = require('@hapi/jwt')
+const Inert = require('@hapi/inert')
+const path = require('path')
 
 const albums = require('./api/albums')
 const AlbumService = require('./service/postgres/albumService')
@@ -31,6 +33,8 @@ const _exports = require('./api/exports')
 const ProducerService = require('./service/rabbitmq/producerService')
 const ExportsValidator = require('./validator/exports')
 
+const StorageService = require('./service/storage/storageService')
+
 const TokenManager = require('./tokenize/tokenManager')
 const ClientError = require('./exceptions/ClientError')
 const config = require('./utils/config')
@@ -42,6 +46,7 @@ const init = async () => {
     const authenticationService = new AuthenticationService()
     const collaborationService = new CollaborationService()
     const playlistService = new PlaylistService(collaborationService)
+    const storageService = new StorageService(path.resolve(__dirname, 'uploads/file/images'))
     const server = Hapi.server({
         port: config.app.port,
         host: config.app.host,
@@ -55,8 +60,21 @@ const init = async () => {
     await server.register([
         {
             plugin: Jwt
+        },
+        {
+            plugin: Inert
         }
     ])
+
+    server.route({
+        method: 'GET',
+        path: '/upload/{param*}',
+        handler: {
+            directory: {
+                path: path.resolve(__dirname, 'file')
+            }
+        }
+    })
 
     server.auth.strategy('playlist_jwt', 'jwt', {
         keys: process.env.ACCESS_TOKEN_KEY,
@@ -79,7 +97,8 @@ const init = async () => {
             {
                 plugin: albums,
                 options: {
-                    service: albumService,
+                    albumService,
+                    storageService,
                     validator: AlbumValidator
                 },
             },
