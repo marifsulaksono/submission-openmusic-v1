@@ -41,7 +41,7 @@ class PlaylistService {
 
     async deletePlaylistById(id) {
         const result = await this._pool.query('DELETE FROM playlists WHERE id = $1 RETURNING id', [id])
-        if (!result.rows.length) {
+        if (!result.rowCount) {
             throw new NotFoundError('Gagal menghapus playlist. Id tidak ditemukan')
         }
     }
@@ -123,7 +123,7 @@ class PlaylistService {
         }
 
         const result = await this._pool.query(query)
-        if (!result.rows.length) {
+        if (!result.rowCount) {
             throw new NotFoundError('Playlist tidak ditemukan')
         }
 

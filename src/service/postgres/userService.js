@@ -33,7 +33,7 @@ class userService {
 
     async getUserById(id) {
         const result = await this._pool.query('SELECT * FROM users WHERE id = $1', [id])
-        if (!result.rows.length) {
+        if (!result.rowCount) {
             throw new NotFoundError('User tidak ditemukan')
         }
 
