@@ -61,6 +61,51 @@ class AlbumHandler {
         }
     }
 
+    async postAlbumLikesHandler(request, h) {
+        const { id } = request.params
+        const { id: userId } = request.auth.credentials
+
+        await this._albumService.getAlbumById(id)
+        await this._albumService.postAlbumLikes(id, userId)
+
+        const response = h.response({
+            status: 'success',
+            message: 'Berhasil menambahkan likes ke album'
+        })
+
+        response.code(201)
+        return response
+    }
+
+    async getAlbumLikesHandler(request, h) {
+        const { id } = request.params
+
+        const [result, isCache] = await this._albumService.getAlbumLikes(id)
+        const likes = parseInt(result.likes)
+        const response = h.response({
+            status: 'success',
+            data: { likes: likes }
+        })
+
+        if (isCache) {
+            response.header('X-Data-Source', 'cache')
+        }
+
+        return response
+    }
+
+    async deleteAlbumLikesHandler(request, h) {
+        const { id } = request.params
+        const { id: userId } = request.auth.credentials
+
+        await this._albumService.deleteAlbumLikes(id, userId)
+
+        return {
+            status: 'success',
+            message: 'Berhasil like likes pada album'
+        }
+    }
+
     async postCoverAlbumHandler(request, h) {
         const { cover } = request.payload
         this._validator.validateAlbumCoverHeaders(cover.hapi.headers)
