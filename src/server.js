@@ -73,7 +73,7 @@ const init = async () => {
         path: '/upload/{param*}',
         handler: {
             directory: {
-                path: path.resolve(__dirname, 'file')
+                path: path.resolve(__dirname, 'uploads/file')
             }
         }
     })
